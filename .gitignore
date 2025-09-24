@@ -1,2 +1,2 @@
-.vscode-test/
-node_modules/
+/.vscode-test
+/node_modules
