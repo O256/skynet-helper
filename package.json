@@ -10,12 +10,12 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./extension.js",
+  "main": "./action/extension.js",
   "contributes": {
     "commands": [
       {
         "command": "hello.helloWorld",
-        "title": "Hello World111"
+        "title": "Hello World"
       }
     ],
     "languages": [
@@ -35,6 +35,63 @@
         "language": "sproto",
         "scopeName": "source.sproto",
         "path": "./sproto/sproto.tmLanguage"
+      }
+    ],
+    "breakpoints": [
+      {
+        "language": "lua"
+      }
+    ],
+    "debuggers": [
+      {
+        "type": "lua",
+        "label": "skynet debugger",
+        "languages": [
+          "lua"
+        ],
+        "linux": {
+          "program": "./bin/linux/skynetda"
+        },
+        "initialConfigurations": [
+          {
+            "name": "skynet debugger",
+            "type": "lua",
+            "request": "launch",
+            "workdir": "${workspaceFolder}",
+            "program": "./skynet",
+            "config": "./examples/config_vsc",
+            "service": "./service"
+          }
+        ],
+        "configurationAttributes": {
+          "launch": {
+            "required": [
+              "program"
+            ],
+            "properties": {
+              "workdir": {
+                "type": "string",
+                "description": "Set the work directory",
+                "default": "${workspaceFolder}"
+              },
+              "program": {
+                "type": "string",
+                "description": "Set the path of skynet program, the path is relative to workdir",
+                "default": "./skynet"
+              },
+              "config": {
+                "type": "string",
+                "description": "skynet config path",
+                "default": "./examples/config_vsc"
+              },
+              "service": {
+                "type": "string",
+                "description": "Set the path of skynet service, the path is relative to workdir",
+                "default": "./service"
+              }
+            }
+          }
+        }
       }
     ]
   },
