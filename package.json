@@ -7,10 +7,21 @@
     "vscode": "^1.104.0"
   },
   "categories": [
-    "Other"
-  ],
-  "activationEvents": [],
+		"Debuggers"
+	],
+	"private": true,
+	"extensionKind": [
+		"workspace"
+	],
   "main": "./action/extension.js",
+  "activationEvents": [
+		"onDebug"
+	],
+  "keywords": [
+    "debugger",
+    "lua",
+    "skynet"
+  ],
   "contributes": {
     "commands": [
       {
@@ -50,7 +61,7 @@
           "lua"
         ],
         "linux": {
-          "program": "./bin/linux/skynetda"
+          "program": "./bin/sdb"
         },
         "initialConfigurations": [
           {
