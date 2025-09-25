@@ -73,7 +73,7 @@ static void init_lua_path(lua_State *dL) {
     lua_getglobal(dL, "package");    // [pkg]
     lua_getfield(dL, -1, "path");    // [pkg|path]
     lua_pushstring(dL, "path");      // [pkg|path|pathkey]
-    lua_pushfstring(dL, "../?.lua;../?.luac;%s", lua_tostring(dL, -2)); // [pkg|path|pathkey|pathval]
+    lua_pushfstring(dL, "./?.lua;./?.luac;%s", lua_tostring(dL, -2)); // [pkg|path|pathkey|pathval]
     lua_settable(dL, -4);    // [pkg|path]
     lua_pop(dL, 1); // [pkg]
 
@@ -85,7 +85,7 @@ static void init_lua_path(lua_State *dL) {
 }
 
 static bool run_script(lua_State *L) {
-    int err = (luaL_loadfile(L, "../debugger.lua") || lua_pcall(L, 0, 6, 0));
+    int err = (luaL_loadfile(L, "./debugger.lua") || lua_pcall(L, 0, 6, 0));
     if (err) {
         fprintf(logger, "%s\n", lua_tostring(L, -1));
         return false;

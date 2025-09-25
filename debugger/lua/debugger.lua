@@ -1,5 +1,5 @@
 local cjson = require "cjson"
-cjson.encode_empty_table_as_array(true)
+-- cjson.encode_empty_table_as_array(true)
 local vscaux = require "vscaux"
 
 local workdir = ""
