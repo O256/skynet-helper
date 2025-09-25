@@ -7,16 +7,16 @@
     "vscode": "^1.104.0"
   },
   "categories": [
-		"Debuggers"
-	],
-	"private": true,
-	"extensionKind": [
-		"workspace"
-	],
+    "Debuggers"
+  ],
+  "private": true,
+  "extensionKind": [
+    "workspace"
+  ],
   "main": "./action/extension.js",
   "activationEvents": [
-		"onDebug"
-	],
+    "onDebug"
+  ],
   "keywords": [
     "debugger",
     "lua",
@@ -55,8 +55,8 @@
     ],
     "debuggers": [
       {
-        "type": "lua",
-        "label": "skynet debugger",
+        "type": "skynet-helper",
+        "label": "SkynetHelper",
         "languages": [
           "lua"
         ],
@@ -65,13 +65,29 @@
         },
         "initialConfigurations": [
           {
-            "name": "skynet debugger",
-            "type": "lua",
+            "label": "Skynet: Launch",
+            "name": "SkynetHelper",
+            "type": "skynet-helper",
             "request": "launch",
             "workdir": "${workspaceFolder}",
             "program": "./skynet",
             "config": "./examples/config_vsc",
             "service": "./service"
+          }
+        ],
+        "configurationSnippets": [
+          {
+            "label": "Skynet: Launch",
+            "description": "A skynet debug configuration",
+            "body": {
+              "name": "SkynetHelper",
+              "type": "skynet-helper",
+              "request": "launch",
+              "workdir": "${workspaceFolder}",
+              "program": "./skynet",
+              "config": "./examples/config_vsc",
+              "service": "./service"
+            }
           }
         ],
         "configurationAttributes": {
