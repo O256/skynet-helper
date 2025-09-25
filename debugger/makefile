@@ -2,7 +2,7 @@
 # 变量定义
 ############################################################
 CC = gcc
-SRC = ../src/main.c
+SRC = src/main.c
 TARGET = skynet-helper
 
 BIN_DIR = ../bin
