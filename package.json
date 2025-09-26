@@ -5,6 +5,10 @@
   "publisher": "Oliver256",
   "version": "0.0.3",
   "icon": "img/icon.png",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:O256/skynet-helper.git"
+  },
   "engines": {
     "vscode": "^1.104.0"
   },
