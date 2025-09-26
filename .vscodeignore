@@ -6,5 +6,5 @@
 **/*.map
 **/eslint.config.mjs
 **/.vscode-test.*
-docs/**
+doc/**
 test/**

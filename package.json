@@ -2,7 +2,9 @@
   "name": "skynet-helper",
   "displayName": "Skynet Helper",
   "description": "A tool to help with Skynet development",
-  "version": "0.0.1",
+  "publisher": "Oliver256",
+  "version": "0.0.3",
+  "icon": "img/icon.png",
   "engines": {
     "vscode": "^1.104.0"
   },
@@ -13,7 +15,7 @@
   "extensionKind": [
     "workspace"
   ],
-  "main": "./action/extension.js",
+  "main": "./src/extension.js",
   "activationEvents": [
     "onDebug"
   ],
