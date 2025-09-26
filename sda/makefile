@@ -3,7 +3,7 @@
 ############################################################
 CC = gcc
 SRC = src/main.c
-TARGET = sdb
+TARGET = sda
 
 BIN_DIR = ../bin
 INSTALL_SCRIPTS = lua/*.lua

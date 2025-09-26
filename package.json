@@ -60,9 +60,8 @@
         "languages": [
           "lua"
         ],
-        "linux": {
-          "program": "./bin/sdb"
-        },
+        
+        "program": "./bin/sda",
         "initialConfigurations": [
           {
             "label": "Skynet: Launch",
@@ -128,11 +127,15 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.104.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
-    "eslint": "^9.34.0",
+    "@types/vscode": "^1.104.0",
     "@vscode/test-cli": "^0.0.11",
-    "@vscode/test-electron": "^2.5.2"
+    "@vscode/test-electron": "^2.5.2",
+    "eslint": "^9.34.0"
+  },
+  "dependencies": {
+    "vscode-debugadapter": "^1.51.0",
+    "vscode-debugadapter-testsupport": "^1.51.0"
   }
 }
