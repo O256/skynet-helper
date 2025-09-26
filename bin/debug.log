@@ -3,3 +3,4 @@ workdir: /data/ssd/home/user00/bm/server
 skynet path: ./skynet/skynet
 config path: ./config/config.dev
 service path: ./skynet/service
+child exit: 0
