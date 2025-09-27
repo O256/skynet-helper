@@ -1,126 +1,87 @@
-const readline = require('readline');
-const fs = require('fs');
+const { DebugSession, InitializedEvent, TerminatedEvent, OutputEvent, Breakpoint, StoppedEvent } = require('vscode-debugadapter');
+const { spawn } = require('child_process');
 
-function log(message) {
-    // 写入文件
-    fs.appendFileSync('./dap.log', message + '\n');
-    // 通过 DAP output 事件发送日志
-    sendResponse({
-        seq: 0,
-        type: 'event',
-        event: 'output',
-        body: {
-            category: 'console',
-            output: message + '\n'
+class SkynetDebugSession extends DebugSession {
+    constructor() {
+        super();
+        this.debugProcess = null;
+    }
+
+    initializeRequest(response, args) {
+        this.sendEvent(new OutputEvent('收到 initialize 请求: ' + JSON.stringify(args) + '\n', 'console'));
+        this.sendResponse(response);
+        this.sendEvent(new InitializedEvent());
+    }
+
+    launchRequest(response, args) {
+        this.sendEvent(new OutputEvent('收到 launch 请求: ' + JSON.stringify(args) + '\n', 'console'));
+        const { workdir, program, config, service } = args;
+        if (workdir) {
+            try {
+                process.chdir(workdir);
+                this.sendEvent(new OutputEvent(`工作目录已更改为: ${workdir}\n`, 'console'));
+            } catch (err) {
+                this.sendEvent(new OutputEvent(`更改工作目录失败: ${err.message}\n`, 'console'));
+            }
         }
-    });
-}
 
-log("arguments: " + process.argv.join(' '));
+        const child = spawn(program, [config], { stdio: ['pipe', 'pipe', 'pipe'] });
+        this.debugProcess = child;
 
-function sendResponse(response) {
-    const json = JSON.stringify(response);
-    // DAP 消息需要 Content-Length 头
-    const header = `Content-Length: ${Buffer.byteLength(json, 'utf8')}`;
-    process.stdout.write(header + '\r\n\r\n' + json);
-}
+        let buffer = '';
+        let contentLength = null;
 
-const rl = readline.createInterface({
-    input: process.stdin,
-    output: process.stdout,
-    terminal: false
-});
+        child.stdout.on('data', data => {
+            buffer += data.toString();
 
-let buffer = '';
-
-function handleRequest(request) {
-    log('收到请求: ' + JSON.stringify(request));
-    // 模拟响应
-    switch (request.command) {
-        case 'initialize':
-            sendResponse({
-                seq: request.seq,
-                type: 'response',
-                request_seq: request.seq,
-                success: true,
-                command: 'initialize',
-                body: {
-                    supportsConfigurationDoneRequest: true
+            while (true) {
+                if (contentLength == null) {
+                    // 查找 Content-Length 头
+                    const match = buffer.match(/Content-Length: (\d+)\r\n\r\n/);
+                    if (match) {
+                        contentLength = parseInt(match[1], 10);
+                        buffer = buffer.slice(match.index + match[0].length);
+                    } else {
+                        break; // 没有完整头，等待更多数据
+                    }
                 }
-            });
-            break;
-        case 'launch':
-            // 读取参数
-            const { workdir, program, config, service } = request.arguments || {};
-            log(`启动参数: workdir=${workdir}, program=${program}, config=${config}, service=${service}`);
-            // 切换工作目录
-            if (workdir) {
-                try {
-                    process.chdir(workdir);
-                    log(`切换工作目录到: ${workdir}`);
-                } catch (e) {
-                    log(`切换工作目录失败: ${e.message}`);
+
+                if (contentLength != null && buffer.length >= contentLength) {
+                    const jsonStr = buffer.slice(0, contentLength);
+                    buffer = buffer.slice(contentLength);
+                    contentLength = null;
+                    try {
+                        const json = JSON.parse(jsonStr);
+                        this.sendEvent(new OutputEvent(json.body.output, 'console'));
+                    } catch (err) {
+                        // 解析失败处理
+                        this.sendEvent(new OutputEvent('无法解析输出为 JSON: ' + err.message + '\n原始数据: ' + jsonStr, 'stderr'));
+                    }
+                } else {
+                    break; // 等待更多数据
                 }
             }
-            // 设置环境变量
-            process.env.vscdbg_workdir = workdir || '';
-            process.env.vscdbg_service = service || '';
-            log(`设置环境变量: vscdbg_workdir=${process.env.vscdbg_workdir}, vscdbg_service=${process.env.vscdbg_service}`);
+        });
+        child.stderr.on('data', data => {
+            this.sendEvent(new OutputEvent('子进程错误: ' + data.toString(), 'console'));
+            this.sendEvent(new OutputEvent(data.toString(), 'stderr'));
+        });
+        child.on('exit', (code, signal) => {
+            this.sendEvent(new OutputEvent(`调试程序已退出: code=${code}, signal=${signal}\n`, 'console'));
+            this.sendEvent(new TerminatedEvent());
+        });
 
-            sendResponse({
-                seq: request.seq,
-                type: 'response',
-                request_seq: request.seq,
-                success: true,
-                command: 'launch',
-                body: {}
-            });
-            break;
-        case 'setBreakpoints':
-            sendResponse({
-                seq: request.seq,
-                type: 'response',
-                request_seq: request.seq,
-                success: true,
-                command: 'setBreakpoints',
-                body: {
-                    breakpoints: (request.arguments.breakpoints || []).map(bp => ({
-                        verified: true,
-                        line: bp.line
-                    }))
-                }
-            });
-            break;
-        default:
-            sendResponse({
-                seq: request.seq,
-                type: 'response',
-                request_seq: request.seq,
-                success: true,
-                command: request.command,
-                body: {}
-            });
+        this.sendResponse(response);
     }
+
+    setBreakPointsRequest(response, args) {
+        this.sendEvent(new OutputEvent('收到 setBreakPoints 请求: ' + JSON.stringify(args) + '\n', 'console'));
+        const breakpoints = (args.breakpoints || []).map(bp => new Breakpoint(true, bp.line));
+        response.body = { breakpoints };
+        this.sendResponse(response);
+    }
+
+    // 其他 DAP 请求可按需实现
 }
 
-// 解析 DAP 消息（Content-Length 头 + JSON）
-process.stdin.on('data', chunk => {
-    buffer += chunk.toString();
-    while (true) {
-        const headerMatch = buffer.match(/Content-Length: (\d+)\r\n\r\n/);
-        if (!headerMatch) break;
-        const len = parseInt(headerMatch[1], 10);
-        const headerLen = headerMatch[0].length;
-        if (buffer.length < headerLen + len) break;
-        const jsonStr = buffer.substr(headerLen, len);
-        buffer = buffer.substr(headerLen + len);
-        try {
-            const request = JSON.parse(jsonStr);
-            handleRequest(request);
-        } catch (e) {
-            console.error('解析 DAP 消息失败:', e);
-        }
-    }
-});
-
-
+DebugSession.run(SkynetDebugSession);

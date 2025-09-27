@@ -2,21 +2,22 @@
  * skynet debug adpater
  * by colin
  */
+#include <errno.h>
+#include <signal.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <stdbool.h>
 #include <string.h>
-#include <errno.h>
-#include <unistd.h>
-#include <signal.h>
 #include <sys/wait.h>
+#include <unistd.h>
+
+#include "lauxlib.h"
 #include "lua.h"
 #include "lualib.h"
-#include "lauxlib.h"
 
 FILE *logger = NULL;
 
-static void error_exit(const char* format, ...) {
+static void error_exit(const char *format, ...) {
     va_list ap;
     va_start(ap, format);
     vfprintf(logger, format, ap);
@@ -41,7 +42,7 @@ static bool init_debuglog() {
     return true;
 }
 
-static void debuglog(const char* format, ...) {
+static void debuglog(const char *format, ...) {
     va_list ap;
     va_start(ap, format);
     vfprintf(logger, format, ap);
@@ -49,39 +50,39 @@ static void debuglog(const char* format, ...) {
 }
 
 static int sigign() {
-	struct sigaction sa;
-	sa.sa_handler = SIG_IGN;
-	sa.sa_flags = 0;
-	sigemptyset(&sa.sa_mask);
-	sigaction(SIGHUP, &sa, 0);
-	return 0;
+    struct sigaction sa;
+    sa.sa_handler = SIG_IGN;
+    sa.sa_flags = 0;
+    sigemptyset(&sa.sa_mask);
+    sigaction(SIGHUP, &sa, 0);
+    return 0;
 }
 
 static void change_workdir(const char *path) {
     const char *pos = strrchr(path, '/');
     if (pos) {
         int n = pos - path;
-        char *wdir = malloc(n+1);
+        char *wdir = malloc(n + 1);
         strncpy(wdir, path, n);
-        wdir[n+1] = '\0';
+        wdir[n + 1] = '\0';
         chdir(wdir);
         free(wdir);
     }
 }
 
 static void init_lua_path(lua_State *dL) {
-    lua_getglobal(dL, "package");    // [pkg]
-    lua_getfield(dL, -1, "path");    // [pkg|path]
-    lua_pushstring(dL, "path");      // [pkg|path|pathkey]
-    lua_pushfstring(dL, "./?.lua;./?.luac;%s", lua_tostring(dL, -2)); // [pkg|path|pathkey|pathval]
-    lua_settable(dL, -4);    // [pkg|path]
-    lua_pop(dL, 1); // [pkg]
+    lua_getglobal(dL, "package");                                      // [pkg]
+    lua_getfield(dL, -1, "path");                                      // [pkg|path]
+    lua_pushstring(dL, "path");                                        // [pkg|path|pathkey]
+    lua_pushfstring(dL, "./?.lua;./?.luac;%s", lua_tostring(dL, -2));  // [pkg|path|pathkey|pathval]
+    lua_settable(dL, -4);                                              // [pkg|path]
+    lua_pop(dL, 1);                                                    // [pkg]
 
-    lua_getfield(dL, -1, "cpath");    // [pkg|cpath]
-    lua_pushstring(dL, "cpath");     // [pkg|cpath|cpathkey]
-    lua_pushfstring(dL, "./?.so;%s", lua_tostring(dL, -2)); // [pkg|cpath|cpathkey|cpathval]
-    lua_settable(dL, -4);    // [pkg|path]
-    lua_pop(dL, 2); // []
+    lua_getfield(dL, -1, "cpath");                           // [pkg|cpath]
+    lua_pushstring(dL, "cpath");                             // [pkg|cpath|cpathkey]
+    lua_pushfstring(dL, "./?.so;%s", lua_tostring(dL, -2));  // [pkg|cpath|cpathkey|cpathval]
+    lua_settable(dL, -4);                                    // [pkg|path]
+    lua_pop(dL, 2);                                          // []
 }
 
 static bool run_script(lua_State *L) {
@@ -93,8 +94,8 @@ static bool run_script(lua_State *L) {
     return true;
 }
 
-static void run_skynet(const char *workdir, const char *skynet, const char *config, const char *service,
-	bool debug, const char *breakpoints) {
+static void run_skynet(const char *workdir, const char *skynet, const char *config, const char *service, bool debug,
+                       const char *breakpoints) {
     if (debug)
         setenv("vscdbg_open", "on", 1);
     else
@@ -102,16 +103,16 @@ static void run_skynet(const char *workdir, const char *skynet, const char *conf
 
     setenv("vscdbg_workdir", workdir, 1);
     setenv("vscdbg_bps", breakpoints, 1);
-	setenv("vscdbg_service", service, 1);
+    setenv("vscdbg_service", service, 1);
 
-	debuglog("workdir: %s\n", workdir);
-	debuglog("skynet path: %s\n", skynet);
-	debuglog("config path: %s\n", config);
-	debuglog("service path: %s\n", service);
+    debuglog("workdir: %s\n", workdir);
+    debuglog("skynet path: %s\n", skynet);
+    debuglog("config path: %s\n", config);
+    debuglog("service path: %s\n", service);
 
     if (chdir(workdir) != 0) {
-		error_exit("run_skynet - chdir: %s\n", strerror(errno));
-	}
+        error_exit("run_skynet - chdir: %s\n", strerror(errno));
+    }
 
     execl(skynet, skynet, config, NULL);
     error_exit("execl: %s\n", strerror(errno));
@@ -132,9 +133,9 @@ int main(int argc, char const *argv[]) {
     }
 
     const char *workdir = lua_tostring(L, -6);
-	const char *skynet = lua_tostring(L, -5);
+    const char *skynet = lua_tostring(L, -5);
     const char *config = lua_tostring(L, -4);
-	const char *service = lua_tostring(L, -3);
+    const char *service = lua_tostring(L, -3);
     bool debug = lua_toboolean(L, -2);
     const char *breakpoints = lua_tostring(L, -1);
 
@@ -147,10 +148,10 @@ int main(int argc, char const *argv[]) {
             error_exit("wait: %s\n", strerror(errno));
         debuglog("child exit: %d\n", state);
     } else {
-		debuglog("run_skynet\n");
+        debuglog("run_skynet\n");
         run_skynet(workdir, skynet, config, service, debug, breakpoints);
     }
 
     lua_close(L);
-    return 0;  
+    return 0;
 }
