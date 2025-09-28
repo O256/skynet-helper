@@ -8,7 +8,7 @@ class SkynetDebugSession extends DebugSession {
     }
 
     initializeRequest(response, args) {
-        this.sendEvent(new OutputEvent('收到 initialize 请求: ' + JSON.stringify(args) + '\n', 'console'));
+        // this.sendEvent(new OutputEvent('收到 initialize 请求: ' + JSON.stringify(args) + '\n', 'console'));
         this.sendResponse(response);
         this.sendEvent(new InitializedEvent());
     }
@@ -33,6 +33,14 @@ class SkynetDebugSession extends DebugSession {
         const child = spawn(program, [config], { stdio: 'inherit', env: env });
         this.debugProcess = child;
 
+        // 等待子进程退出, 然后退出自己
+        child.on('exit', (code, signal) => {
+            this.sendEvent(new OutputEvent(`skynet debugger stop!\n`, 'console'));
+            this.sendEvent(new TerminatedEvent());
+            this.shutdown();
+        });
+
+        this.sendEvent(new OutputEvent(`skynet debugger start!\n`, 'console'));
         this.sendResponse(response);
     }
 }
