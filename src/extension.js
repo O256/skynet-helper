@@ -153,6 +153,12 @@ function activate(context) {
 				}
 			}
 			if (line.endsWith('{')) {
+				// 在 .activity_type3 结构前插入一个空行
+				if (line.startsWith('.activity_type3')) {
+					if (result.length > 0 && result[result.length - 1] !== '') {
+						result.push('');
+					}
+				}
 				result.push(indentStr.repeat(Math.max(indent, 0)) + line);
 				indent += 1;
 				// 检查是否进入 request/response block
