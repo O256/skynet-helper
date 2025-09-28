@@ -217,7 +217,10 @@ function formatSprotoAST(ast) {
     }
     // 协议定义
     for (const proto of ast.protocols) {
-        if (proto.comment) out.push(proto.comment.split('\n').map(c => c.trim()).join('\n'));
+        // 协议注释紧跟协议定义
+        if (proto.comment) {
+            out.push(proto.comment.split('\n').map(c => c.trim()).join('\n'));
+        }
         out.push(`${proto.name} ${proto.id} {`);
         if (proto.request) {
             out.push(indent + 'request {');
