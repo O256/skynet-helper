@@ -1,5 +1,5 @@
 // sprotoFormatter.js
-// Sproto 格式化核心逻辑
+// 而格式化sproto文件
 
 // Sproto AST 结构：
 // {
@@ -15,6 +15,8 @@ function parseSproto(text) {
     while (i < lines.length) {
         let rawLine = lines[i];
         let line = rawLine.trim();
+
+        // 悬空注释添加到头部注释
         if (!line) {
             for (const c of pendingComments) {
                 ast.headerComments.push(c);
@@ -23,19 +25,22 @@ function parseSproto(text) {
             i++;
             continue;
         }
-        // 收集块前注释（包括空行和注释）
+
+        // 收集块前注释
         if (line.startsWith('#')) {
             pendingComments.push(rawLine);
             i++;
             continue;
         }
+
         // 类型定义
         if (/^\.[\w_]+\s*\{/.test(line)) {
             const typeMatch = line.match(/^\.([\w_]+)\s*\{/);
             const typeName = typeMatch[1];
             let fields = [];
             let comment = '';
-            // 只要前面是注释且紧邻block就归属
+
+            // 将紧挨着的注释归属到类型上
             if (pendingComments.length > 0) {
                 let isAdjacent = true;
                 for (let k = pendingComments.length - 1; k >= 0; k--) {
@@ -77,6 +82,7 @@ function parseSproto(text) {
             i++;
             continue;
         }
+
         // 协议定义
         if (/^[\w_]+\s+\d+\s*\{/.test(line)) {
             const protoMatch = line.match(/^([\w_]+)\s+(\d+)\s*\{/);
@@ -84,7 +90,7 @@ function parseSproto(text) {
             const protoId = Number(protoMatch[2]);
             let request = null, response = null;
             let comment = '';
-            // 只要前面是注释且紧邻block就归属
+            // 将紧挨着的注释归属到类型上
             if (pendingComments.length > 0) {
                 let isAdjacent = true;
                 for (let k = pendingComments.length - 1; k >= 0; k--) {
