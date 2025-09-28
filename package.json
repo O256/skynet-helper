@@ -67,7 +67,7 @@
           "lua",
           "Lua"
         ],
-        "program": "./dap/index.js",
+        "program": "./src/skynetDebugger.js",
         "runtime": "node",
         "initialConfigurations": [
           {
