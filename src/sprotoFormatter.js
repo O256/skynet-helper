@@ -177,12 +177,8 @@ function formatSprotoAST(ast) {
     }
 
     // 输出HeaderComments
-    const headerComments = ast.headerComments;
-    if (headerComments.length > 0) {
-        for (const c of headerComments) {
-            out.push(c.trim());
-        }
-        out.push('');
+    for (const c of ast.headerComments) {
+        out.push(c.trim());
     }
 
     // 类型定义
