@@ -8,3 +8,5 @@
 **/.vscode-test.*
 doc/**
 test/**
+sda/**
+bin/**
