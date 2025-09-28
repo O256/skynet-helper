@@ -8,16 +8,18 @@
 // }
 function parseSproto(text) {
     const lines = text.split(/\r?\n/);
-    const ast = { types: [], protocols: [] };
+    const ast = { types: [], protocols: [], headerComments: [] };
     let i = 0;
     let pendingComments = [];
-    let headerComments = [];
-    let firstBlockFound = false;
+    // 去除 headerComments 相关逻辑
     while (i < lines.length) {
         let rawLine = lines[i];
         let line = rawLine.trim();
         if (!line) {
-            pendingComments.push(rawLine); // 保留空行
+            for (const c of pendingComments) {
+                ast.headerComments.push(c);
+            }
+            pendingComments = [];
             i++;
             continue;
         }
@@ -33,22 +35,8 @@ function parseSproto(text) {
             const typeName = typeMatch[1];
             let fields = [];
             let comment = '';
-            if (!firstBlockFound && pendingComments.length > 0) {
-                // 判断 pendingComments 是否全为注释（无空行）
-                let onlyComments = true;
-                for (let c of pendingComments) {
-                    if (c.trim() === '') {
-                        onlyComments = false;
-                        break;
-                    }
-                }
-                if (onlyComments) {
-                    comment = pendingComments.join('\n');
-                } else {
-                    headerComments = pendingComments.slice();
-                }
-            } else if (pendingComments.length > 0) {
-                // 非首块，常规归属
+            // 只要前面是注释且紧邻block就归属
+            if (pendingComments.length > 0) {
                 let isAdjacent = true;
                 for (let k = pendingComments.length - 1; k >= 0; k--) {
                     if (pendingComments[k].trim() !== '' && !pendingComments[k].trim().startsWith('#')) {
@@ -59,7 +47,6 @@ function parseSproto(text) {
                 if (isAdjacent) comment = pendingComments.join('\n');
             }
             pendingComments = [];
-            firstBlockFound = true;
             i++;
             while (i < lines.length && !lines[i].includes('}')) {
                 let fieldLine = lines[i].trim();
@@ -97,20 +84,8 @@ function parseSproto(text) {
             const protoId = Number(protoMatch[2]);
             let request = null, response = null;
             let comment = '';
-            if (!firstBlockFound && pendingComments.length > 0) {
-                let onlyComments = true;
-                for (let c of pendingComments) {
-                    if (c.trim() === '') {
-                        onlyComments = false;
-                        break;
-                    }
-                }
-                if (onlyComments) {
-                    comment = pendingComments.join('\n');
-                } else {
-                    headerComments = pendingComments.slice();
-                }
-            } else if (pendingComments.length > 0) {
+            // 只要前面是注释且紧邻block就归属
+            if (pendingComments.length > 0) {
                 let isAdjacent = true;
                 for (let k = pendingComments.length - 1; k >= 0; k--) {
                     if (pendingComments[k].trim() !== '' && !pendingComments[k].trim().startsWith('#')) {
@@ -121,7 +96,6 @@ function parseSproto(text) {
                 if (isAdjacent) comment = pendingComments.join('\n');
             }
             pendingComments = [];
-            firstBlockFound = true;
             i++;
             while (i < lines.length && !lines[i].includes('}')) {
                 let subLine = lines[i].trim();
@@ -167,18 +141,12 @@ function parseSproto(text) {
         }
         i++;
     }
-    ast.headerComments = headerComments;
     return ast;
 }
 
 function formatSprotoAST(ast) {
     const indent = '    ';
     let out = [];
-    // 保证开头注释在最前面
-    if (ast.headerComments && ast.headerComments.length > 0) {
-        out.push(...ast.headerComments);
-        out.push(''); // 保持注释和内容间空行
-    }
     // 对齐辅助函数
     function formatFields(fields, indentLevel) {
         if (!fields || fields.length === 0) return [];
@@ -207,6 +175,16 @@ function formatSprotoAST(ast) {
         });
         return lines;
     }
+
+    // 输出HeaderComments
+    const headerComments = ast.headerComments;
+    if (headerComments.length > 0) {
+        for (const c of headerComments) {
+            out.push(c.trim());
+        }
+        out.push('');
+    }
+
     // 类型定义
     for (const type of ast.types) {
         if (type.comment) out.push(type.comment.split('\n').map(c => c.trim()).join('\n'));
