@@ -1,0 +1,17 @@
+thread = 4
+harbor = 0
+
+-- 实际运行模式
+-- logger = "./logs/game.log"
+-- daemon = "./game.pid"
+
+-- VSCode调试模式
+logger = "vscdebuglog"
+logservice = "snlua"
+
+start = "debug"
+bootstrap = "snlua bootstrap"	-- The service for bootstrap
+
+luaservice = "./service/?.lua;./examples/?.lua"
+lualoader = "lualib/loader.lua"
+cpath = "./cservice/?.so"

@@ -33,6 +33,10 @@
       {
         "command": "sproto.format",
         "title": "SkynetHelper: Format Sproto"
+      },
+      {
+        "command": "skynet.debug",
+        "title": "SkynetHelper: Debug Skynet Prepare"
       }
     ],
     "languages": [
@@ -142,6 +146,7 @@
     "eslint": "^9.34.0"
   },
   "dependencies": {
+    "fs-extra": "^11.3.2",
     "readline": "^1.3.0",
     "vscode-debugadapter": "^1.51.0",
     "vscode-debugadapter-testsupport": "^1.51.0"

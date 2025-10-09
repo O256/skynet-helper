@@ -1,4 +1,8 @@
-# Skynet Helper 功能介绍
+# 插件说明
+
+该插件为 Skynet 开发提供了一些辅助功能，提供 Sproto 协议文件的支持，以及 Skynet 服务代码的调试能力。
+
+# Sproto 支持
 
 ## Sproto 语法高亮
 ![Sproto 语法高亮](./img/Sproto语法高亮.png)
@@ -31,6 +35,8 @@
 ![Sproto 自定义类型跳转功能](./img/Sproto自定义类型跳转功能.png)
 
 将鼠标放置到自定义的类型上，按住 `Ctrl` 键并点击即可跳转到该类型的定义。
+
+# Skynet 服务调试
 
 ## 断点调试 skynet 服务中的 Lua 代码
 
