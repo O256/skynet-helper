@@ -92,7 +92,7 @@
               "name": "SkynetHelper",
               "type": "skynet-helper",
               "request": "launch",
-              "workdir": "${workspaceFolder}",
+              "workdir": "^\"\\${workspaceFolder}\"",
               "program": "./skynet",
               "config": "./examples/config.debug",
               "service": "./service"
