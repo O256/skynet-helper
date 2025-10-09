@@ -3,7 +3,7 @@
   "displayName": "Skynet Helper",
   "description": "A tool to help with Skynet development",
   "publisher": "Oliver256",
-  "version": "1.2.1",
+  "version": "1.3.1",
   "icon": "img/icon.png",
   "repository": {
     "type": "git",
@@ -75,19 +75,18 @@
         "runtime": "node",
         "initialConfigurations": [
           {
-            "label": "Skynet: Launch",
             "name": "SkynetHelper",
             "type": "skynet-helper",
             "request": "launch",
             "workdir": "${workspaceFolder}",
             "program": "./skynet",
-            "config": "./examples/config_vsc",
+            "config": "./examples/config.debug",
             "service": "./service"
           }
         ],
         "configurationSnippets": [
           {
-            "label": "Skynet: Launch",
+            "label": "SkynetHelper: Launch",
             "description": "A skynet debug configuration",
             "body": {
               "name": "SkynetHelper",
@@ -95,7 +94,7 @@
               "request": "launch",
               "workdir": "${workspaceFolder}",
               "program": "./skynet",
-              "config": "./examples/config_vsc",
+              "config": "./examples/config.debug",
               "service": "./service"
             }
           }
@@ -119,7 +118,7 @@
               "config": {
                 "type": "string",
                 "description": "skynet config path",
-                "default": "./examples/config_vsc"
+                "default": "./examples/config.debug"
               },
               "service": {
                 "type": "string",
