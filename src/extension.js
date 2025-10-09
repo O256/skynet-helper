@@ -1,17 +1,13 @@
 const vscode = require('vscode');
 const { formatSproto } = require('./sprotoFormatter');
 const { parseSprotoTypes } = require('./sprotoParser');
-
-const path = require('path');
-const fs = require('fs');
-const fse = require('fs-extra');
+const { prepareSkynet } = require('./skynetPrepare');
 
 function activate(context) {
 	console.log('Skynet Helper now active!');
 
 	// 注册 skynet.debug 指令
 	const skynetDebugCmd = vscode.commands.registerCommand('skynet.debug', async function () {
-		// 让用户选择目标 skynet 目录
 		const folders = await vscode.window.showOpenDialog({
 			canSelectFolders: true,
 			canSelectFiles: false,
@@ -23,126 +19,17 @@ function activate(context) {
 			return;
 		}
 		const targetDir = folders[0].fsPath;
-		// 插件内 skynet 目录
-		const extensionSkynetDir = path.join(__dirname, '../skynet');
-		if (!fs.existsSync(extensionSkynetDir)) {
-			vscode.window.showErrorMessage('插件内未找到 skynet 目录');
-			return;
-		}
-		try {
-			await fse.copy(extensionSkynetDir, targetDir, { overwrite: true });
-			// 递归查找 Makefile
-			const makefiles = [];
-			function findMakefiles(dir) {
-				const files = fs.readdirSync(dir);
-				for (const file of files) {
-					const fullPath = path.join(dir, file);
-					const stat = fs.statSync(fullPath);
-					if (stat.isDirectory()) {
-						findMakefiles(fullPath);
-					} else if (file === 'Makefile') {
-						makefiles.push(fullPath);
-					}
-				}
-			}
-			findMakefiles(targetDir);
-			let modified = false;
-			for (const mkfile of makefiles) {
-				let content = fs.readFileSync(mkfile, 'utf8');
-				let changed = false;
-				// 处理多行 LUA_CLIB_SKYNET
-				const lines = content.split(/\r?\n/);
-				let start = -1, end = -1;
-				for (let i = 0; i < lines.length; i++) {
-					if (start === -1 && /^LUA_CLIB_SKYNET\s*=/.test(lines[i])) {
-						start = i;
-						end = i;
-						// 向下查找续行
-						while (end + 1 < lines.length && /\\\s*$/.test(lines[end])) {
-							end++;
-						}
-						break;
-					}
-				}
-				if (start !== -1) {
-					// 收集所有源码文件
-					let block = lines.slice(start, end + 1);
-					let blockStr = block.join('\n');
-					if (!/lua-vscdebugaux\.c/.test(blockStr)) {
-						// 找到最后一个源码文件（最后一个非空且不是 \\ 的行）
-						let insertIdx = end;
-						for (let i = end; i >= start; i--) {
-							if (lines[i].trim() !== '' && !/^\s*\\\s*$/.test(lines[i])) {
-								insertIdx = i;
-								break;
-							}
-						}
-						// 插入 lua-vscdebugaux.c
-						const indent = lines[insertIdx].match(/^\s*/)[0] || '';
-						lines.splice(insertIdx + 1, 0, `${indent}lua-vscdebugaux.c \\`);
-						changed = true;
-					}
-				}
-				// 处理 LUA_CLIB 多行，添加 cjson（无 .so，带反斜杠）
-				let clibStart = -1, clibEnd = -1;
-				for (let i = 0; i < lines.length; i++) {
-					if (clibStart === -1 && /^LUA_CLIB\s*=/.test(lines[i])) {
-						clibStart = i;
-						clibEnd = i;
-						while (clibEnd + 1 < lines.length && /\\\s*$/.test(lines[clibEnd])) {
-							clibEnd++;
-						}
-						break;
-					}
-				}
-				if (clibStart !== -1) {
-					let block = lines.slice(clibStart, clibEnd + 1);
-					let blockStr = block.join('\n');
-					// 检查是否已包含 cjson（不带.so）
-					if (!/(^|\s)cjson(\s|\\|$)/.test(blockStr)) {
-						// 找到最后一个非空且不是 \\ 的行
-						let insertIdx = clibEnd;
-						for (let i = clibEnd; i >= clibStart; i--) {
-							if (lines[i].trim() !== '' && !/^\s*\\\s*$/.test(lines[i])) {
-								insertIdx = i;
-								break;
-							}
-						}
-						// 在该行末尾加 cjson \\，注意处理已有反斜杠
-						let line = lines[insertIdx].replace(/\s*\\\s*$/, '');
-						line = line.replace(/\s*$/, '');
-						lines[insertIdx] = line + ' cjson \\';
-						changed = true;
-					}
-				}
-				// 添加 cjson 编译规则（如无则加，插入到 clean 之前）
-				const cjsonRule = '$(LUA_CLIB_PATH)/cjson.so : 3rd/lua-cjson/lua_cjson.c 3rd/lua-cjson/fpconv.c 3rd/lua-cjson/strbuf.c | $(LUA_CLIB_PATH)';
-				const cjsonCmd = '\t$(CC) $(CFLAGS) $(SHARED) -I3rd/lua-cjson $^ -o $@';
-				if (!content.includes('$(LUA_CLIB_PATH)/cjson.so')) {
-					let cleanIdx = lines.findIndex(line => /^\s*clean\s*:/.test(line));
-					if (cleanIdx === -1) {
-						// 没有 clean，插入末尾
-						lines.push('', cjsonRule, cjsonCmd, '');
-					} else {
-						// 插入到 clean 规则前
-						lines.splice(cleanIdx, 0, '', cjsonRule, cjsonCmd, '');
-					}
-					changed = true;
-				}
-				if (changed) {
-					content = lines.join('\n');
-					fs.writeFileSync(mkfile, content, 'utf8');
-					modified = true;
-				}
-			}
-			vscode.window.showInformationMessage('skynet 目录已成功拷贝到: ' + targetDir + (modified ? '，Makefile 已自动修改。' : '，未找到可修改的 Makefile。'));
-		} catch (err) {
-			vscode.window.showErrorMessage('拷贝或修改 skynet 目录失败: ' + err.message);
-		}
+		const extensionSkynetDir = require('path').join(__dirname, '../skynet');
+		await prepareSkynet(
+			extensionSkynetDir,
+			targetDir,
+			msg => vscode.window.showInformationMessage(msg),
+			err => vscode.window.showErrorMessage(err)
+		);
 	});
 	context.subscriptions.push(skynetDebugCmd);
 
-	// 注册 sproto 格式化命令
+	// 注册 sproto.format 指令
 	const formatSprotoCmd = vscode.commands.registerCommand('sproto.format', async function () {
 		const editor = vscode.window.activeTextEditor;
 		if (!editor || editor.document.languageId !== 'sproto') {
