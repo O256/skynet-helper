@@ -1,13 +1,16 @@
 local skynet = require "skynet"
 
+local u = 9999
 function test_handler()
-    skynet.error("test timer")
+    local a = 1
+    local r = a + u
+    return r
 end
 
 function test_timer()
     local function _timer()
-        skynet.timeout(100, _timer)
         test_handler()
+        skynet.timeout(100, _timer)
     end
     skynet.timeout(100, _timer)
 end

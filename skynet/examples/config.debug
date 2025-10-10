@@ -1,4 +1,4 @@
-thread = 4
+thread = 2
 harbor = 0
 
 -- 实际运行模式
@@ -11,6 +11,9 @@ logservice = "snlua"
 
 start = "debug"
 bootstrap = "snlua bootstrap"	-- The service for bootstrap
+
+-- 调试端口
+debug_console_port = 9201
 
 luaservice = "./service/?.lua;./examples/?.lua"
 lualoader = "lualib/loader.lua"

@@ -9,40 +9,57 @@ cjson.encode_empty_table_as_array(true)
 -- debug
 local THREAD_ID = 1
 
-local addressmap = {}   -- service addresses being debugged
-local stdin             -- get request from vscode using stdin
-local request = {}      -- vscode request
+local addressmap = {} -- service addresses being debugged
+local stdin -- get request from vscode using stdin
+local request = {} -- vscode request
 local breakpoints = {}
-local isterm = false    -- is terminated
-local debug_addr         -- the service beging debugged
+local isterm = false -- is terminated
+local debug_addr -- the service beging debugged
 
+local function readn(fd, n)
+    local buf = {}
+    local total = 0
+    while total < n do
+        local chunk = socket.read(fd, n - total)
+        if not chunk or #chunk == 0 then
+            break
+        end
+        table.insert(buf, chunk)
+        total = total + #chunk
+    end
+    return table.concat(buf)
+end
 
-local function recv_request()
-    -- -- TODO 测试
-    -- local msg = socket.readline(stdin, "\n")
-    -- local ok, req = pcall(cjson.decode, msg)
-    -- if ok then
-    --     return req
-    -- else
-    --     skynet.error(req)
-    -- end
-    -- do return end
-
+local function recv_request1()
     local header = socket.readline(stdin, "\r\n")
     if header:find("Content-Length: ", 1, true) then
         local rd = socket.readline(stdin, "\r\n")
         if rd then
             local len = tonumber(header:match("(%d+)"))
-            local sreq = socket.read(stdin, len)
+            local sreq = readn(stdin, len)
             if sreq then
                 local ok, req = pcall(cjson.decode, sreq)
-                -- skynet.error(sreq)
+                skynet.error(sreq)
                 if ok then
                     return req
                 else
-                    skynet.error("recv_request - error", req)
+                    skynet.error("recv_request - error", len, req, sreq)
                 end
             end
+        end
+    end
+end
+
+local function recv_request()
+    local sreq = socket.readline(stdin, "\r\n")
+    -- skynet.error("recv_request", sreq)
+    if sreq then
+        local ok, req = pcall(cjson.decode, sreq)
+        -- skynet.error(sreq)
+        if ok then
+            return req
+        else
+            skynet.error("recv_request - error", req, sreq)
         end
     end
 end
@@ -55,18 +72,18 @@ local function send_response(cmd, succ, rseq, content)
         message = content
     end
     local res = {
-        seq = vscdebugaux.nextseq(),
+        -- seq = vscdebugaux.nextseq(),
         type = "response",
         success = succ,
         request_seq = rseq,
         command = cmd,
         body = body,
-        message = message,
+        message = message
     }
     local output = io.stdout
     local ok, msg = pcall(cjson.encode, res)
     if ok then
-        local data = string.format("Content-Length: %s\r\n\r\n%s\n", #msg, msg)
+        local data = string.format("%s\r\n", msg)
         if output:write(data) then
             output:flush()
             return true
@@ -81,12 +98,12 @@ local function send_event(event, body)
         seq = vscdebugaux.nextseq(),
         type = "event",
         event = event,
-        body = body,
+        body = body
     }
     local output = io.stdout
     local ok, msg = pcall(cjson.encode, res)
     if ok then
-        local data = string.format("Content-Length: %s\r\n\r\n%s\n", #msg, msg)
+        local data = string.format("%s\r\n", msg)
         if output:write(data) then
             output:flush()
             return true
@@ -126,12 +143,12 @@ function request.initialize(req)
         supportsConfigurationDoneRequest = true,
         supportsSetVariable = false,
         supportsConditionalBreakpoints = true,
-        supportsHitConditionalBreakpoints = true,
+        supportsHitConditionalBreakpoints = true
     })
     send_event("initialized")
     send_event("output", {
         category = "console",
-        output = "skynet debugger start!\n",
+        output = "skynet debugger start!\n"
     })
 end
 
@@ -145,11 +162,11 @@ end
 
 local function calc_hitcount(hitexpr)
     if not hitexpr then
-        return 0 
+        return 0
     end
     local f, msg = load("return " .. hitexpr, "=hitexpr")
     if not f then
-        return 0 
+        return 0
     end
     local ok, ret = pcall(f)
     if not ok then
@@ -168,23 +185,27 @@ function request.setBreakpoints(req)
         if bp.logMessage and bp.logMessage ~= "" then
             logmsg = bp.logMessage .. '\n'
         end
-        bpinfos[#bpinfos+1] = {
-            source = {path = src},
+        bpinfos[#bpinfos + 1] = {
+            source = {
+                path = src
+            },
             line = bp.line,
             logMessage = logmsg,
             condition = bp.condition,
             hitCount = calc_hitcount(bp.hitCondition),
-            currHitCount = 0,
+            currHitCount = 0
         }
-        bps[#bps+1] = {
+        bps[#bps + 1] = {
             verified = true,
-            source = {path = src},
-            line = bp.line,
+            source = {
+                path = src
+            },
+            line = bp.line
         }
     end
     breakpoints[src] = bpinfos
     send_response(req.command, true, req.seq, {
-        breakpoints = bps,
+        breakpoints = bps
     })
 
     debug_update_breakpoints(breakpoints)
@@ -196,13 +217,17 @@ end
 
 function request.evaluate(req)
     if not debug_addr then
-        send_response(req.command, true, req.seq, {result = ""})
+        send_response(req.command, true, req.seq, {
+            result = ""
+        })
     end
     local ok, result = skynet.call(debug_addr, "debug", "vsccmd", "evaluate", req.arguments.expression, req.arguments.frameId)
     if not ok then
         send_response(req.command, false, req.seq, result)
     else
-        send_response(req.command, true, req.seq, {result = result})
+        send_response(req.command, true, req.seq, {
+            result = result
+        })
     end
 end
 
@@ -216,9 +241,10 @@ end
 
 function request.threads(req)
     send_response(req.command, true, req.seq, {
-        threads = {
-            {id = THREAD_ID, name = "mainthread"},
-        }
+        threads = {{
+            id = THREAD_ID,
+            name = "mainthread"
+        }}
     })
 end
 
@@ -249,7 +275,7 @@ function request.stackTrace(req)
         local frames = skynet.call(debug_addr, "debug", "vsccmd", "traceback", maxlevel)
         send_response(req.command, true, req.seq, {
             stackFrames = frames,
-            totalFrames = #frames,
+            totalFrames = #frames
         })
     else
         send_response(req.command, false, req.seq, "strackTrace error")
@@ -265,16 +291,13 @@ function request.scopes(req)
         local frameId = req.arguments.frameId
         skynet.send(debug_addr, "debug", "vsccmd", "scopes", frameId)
         send_response(req.command, true, req.seq, {
-            scopes = {
-                {
-                    name = "Locals",
-                    variablesReference = encode_varref(1, frameId),
-                },
-                {
-                    name = "UpValues",
-                    variablesReference = encode_varref(2, frameId),
-                },
-            }
+            scopes = {{
+                name = "Locals",
+                variablesReference = encode_varref(1, frameId)
+            }, {
+                name = "UpValues",
+                variablesReference = encode_varref(2, frameId)
+            }}
         })
     else
         send_response(req.command, false, req.seq, "scopes error")
@@ -288,7 +311,7 @@ function request.variables(req)
             send_response(req.command, true, req.seq, {
                 variables = vars
             })
-        else 
+        else
             send_response(req.command, false, req.seq, vars)
         end
     else
@@ -296,16 +319,19 @@ function request.variables(req)
     end
 end
 
+local exit_code = 0
 function request.disconnect(req)
     -- TODO: data persistence?
     isterm = true
     send_response(req.command, true, req.seq)
     send_event("output", {
         category = "console",
-        output = "skynet debugger stop!\n",
+        output = "skynet debugger stop!\n"
     })
+
+    exit_code = exit_code + 1
     send_event("exited", {
-        exitCode = 0,
+        exitCode = exit_code
     })
     os.exit(0)
     -- skynet.abort()
@@ -326,6 +352,7 @@ function command.service_exit(addr)
 end
 
 function command.pause(addr, reason)
+    -- skynet.error("debug pause", addr, reason, debug_addr)
     if isterm then
         return
     end
@@ -337,6 +364,7 @@ function command.pause(addr, reason)
         send_event("stopped", {
             reason = reason,
             threadId = THREAD_ID,
+            allThreadsStopped = true
         })
     end
 end
@@ -348,8 +376,10 @@ function command.output(addr, category, msg, source, line)
     send_event("output", {
         category = category,
         output = msg,
-        source = {path = source},
-        line = tonumber(line),
+        source = {
+            path = source
+        },
+        line = tonumber(line)
     })
 end
 
@@ -357,7 +387,7 @@ end
 -- service start 
 
 skynet.start(function()
-    skynet.dispatch("lua", function (session, address, cmd, ...)
+    skynet.dispatch("lua", function(session, address, cmd, ...)
         local f = assert(command[cmd])
         if session ~= 0 then
             skynet.ret(skynet.pack(f(address, ...)))

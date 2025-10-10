@@ -13,7 +13,8 @@ local function send_event(event, body)
     local output = io.stdout
     local ok, msg = pcall(cjson.encode, res)
     if ok then
-        local data = string.format("Content-Length: %s\r\n\r\n%s\n", #msg, msg)
+        -- local data = string.format("Content-Length: %s\r\n\r\n%s\n", #msg, msg)
+        local data = string.format("%s\r\n", msg)
         output:write(data)
         output:flush()
     else
