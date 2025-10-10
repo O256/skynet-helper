@@ -48,11 +48,16 @@ class SkynetDebugSession extends DebugSession {
         this.sendEvent(new OutputEvent(`skynet debugger start!\n`, 'console'));
         this.sendResponse(response);
 
-        // 绑定子进程的输出和错误输出
+        // 绑定子进程的输出和错误输出，处理分包
         if (child.stdout) {
+            let buffer = '';
             child.stdout.on('data', (data) => {
-                const lines = data.toString().split('\r\n').filter(line => line.trim() !== '');
+                buffer += data.toString();
+                let lines = buffer.split('\r\n');
+                // 最后一行可能是不完整的，留到下次
+                buffer = lines.pop();
                 for (const line of lines) {
+                    if (line.trim() === '') continue;
                     try {
                         const event = JSON.parse(line);
                         // this.sendEvent(new OutputEvent(`来自子进程: ${JSON.stringify(event)}\n`, 'console'));
@@ -62,7 +67,9 @@ class SkynetDebugSession extends DebugSession {
                             this.sendResponse(event);
                         }
                     } catch (e) {
-                        this.sendEvent(new OutputEvent(`error: ${line} ${e}\n`, 'console'));
+                        // 内容过长时只显示前1000字符
+                        const preview = line.length > 1000 ? line.slice(0, 1000) + '...<truncated>' : line;
+                        this.sendEvent(new OutputEvent(`error: ${preview} ${e}\n`, 'console'));
                     }
                 }
             });
