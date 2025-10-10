@@ -5,13 +5,13 @@
 # Sproto 支持
 
 ## Sproto 语法高亮
-![Sproto 语法高亮](./img/Sproto语法高亮.png)
+![Sproto 语法高亮](./img/sproto-grammars.png)
 
 打开 `.sproto` 文件即可看到语法高亮效果。**需要注意`sproto`文件的扩展名必须是`.sproto`，否则无法识别。**
 
 ## Sproto 文件格式化
 
-![Sproto 文件格式化](./img/Sproto文件格式化.png)
+![Sproto 文件格式化](./img/sproto-format.png)
 
 打开 `.sproto` 文件，右键选择 `Format Document` 即可格式化当前文件。
 或者使用快捷键 `Shift + Alt + F` 进行格式化。
@@ -26,13 +26,13 @@
 
 ## Sproto 自定义类型提示功能
 
-![Sproto 自定义类型提示功能](./img/Sproto自定义类型提示功能.png)
+![Sproto 自定义类型提示功能](./img/sproto-hover.png)
 
 将鼠标放置到自定义的类型上会弹出提示框，显示该类型的定义。
 
 ## Sproto 自定义类型跳转功能
 
-![Sproto 自定义类型跳转功能](./img/Sproto自定义类型跳转功能.png)
+![Sproto 自定义类型跳转功能](./img/sproto-skip.png)
 
 将鼠标放置到自定义的类型上，按住 `Ctrl` 键并点击即可跳转到该类型的定义。
 
