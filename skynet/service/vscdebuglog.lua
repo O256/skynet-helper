@@ -28,22 +28,21 @@ skynet.register_protocol {
     id = skynet.PTYPE_TEXT,
     unpack = skynet.tostring,
     dispatch = function(_, address, msg)
+        local line, source
         if msg:find("co.vsc.db.", 1, true) == 1 then
-            local line, source, message = msg:match("co.vsc.db.([^|]+)|([^|]+)|(.+)$")
-            if not (line and source and message) then
-                return -- 格式不对直接丢弃
-            end
+            line, source, msg = msg:match("co.vsc.db.([^|]+)|([^|]+)|(.+)$")
+        end
+        if source then
             source = {
                 path = source
             }
-
-            send_event("output", {
-                category = "stdout",
-                output = string.format("%s.%02d [:%08x] %s\n", os.date("%Y-%m-%d %H:%M:%S"), skynet.now() % 100, address, message),
-                source = source,
-                line = tonumber(line)
-            })
         end
+        send_event("output", {
+            category = "stdout",
+            output = string.format("%s.%02d [:%08x] %s\n", os.date("%Y-%m-%d %H:%M:%S"), skynet.now() % 100, address, msg),
+            source = source,
+            line = tonumber(line)
+        })
     end
 }
 
