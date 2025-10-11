@@ -3,7 +3,7 @@
   "displayName": "Skynet Helper",
   "description": "A tool to help with Skynet development",
   "publisher": "Oliver256",
-  "version": "1.3.3",
+  "version": "1.3.4",
   "icon": "img/icon.png",
   "repository": {
     "type": "git",
