@@ -38,21 +38,55 @@
 
 # Skynet 服务调试
 
-## 断点调试 skynet 服务中的 Lua 代码
+想要调试 skynet 服务中的lua代码, 可以按照下面两个步骤进行操作
+1. 调试准备, 运行vscode指令
+2. 添加调试配置
+3. F5启动调试
+
+
+## 1. 调试准备, 运行vscode指令
+
+- 按下快捷键打开命令面板 `Ctrl + Shift + P`，输入 `SkynetHelper: Prepare Debug`，回车执行该命令。
+
+![准备调试环境](img/debug-step1.png)!
+
+- 执行之后需要选择你的skynet所在的路径, 然后确定
+![选择skynet路径](img/debug-step2.png)
+
+- 可以通过git差异看到修改内容。
+![查看修改内容](img/debug-step3.png)
+
+- 通过make linux重新编译skynet
+
+## 2. 添加调试配置
 
 配置`launch.json`，添加如下配置：
 
 ```json
 {
-    "name": "dev server",
+    "name": "SkynetHelper",
     "type": "skynet-helper",
     "request": "launch",
-    "workdir": "${workspaceFolder}/server/",
-    "program": "./skynet/skynet",
-    "config": "./config/config.dev",
-    "service": "./skynet/service" // skynet内部服务，用于调试过滤，不调试skynet的内部服务
+    "workdir": "${workspaceFolder}",
+    "program": "./skynet",
+    "config": "./examples/config.debug",
+    "service": "./service"
 }
 ```
 
+也可以在`launch.json`中选择 `Add Configuration...`，然后选择 `SkynetHelper: Launch`，会自动添加上述配置。
+![自动添加调试配置](img/debug-step4.png)
+
+## 3. F5启动调试
+
 然后`F5`启动调试。这样就可以在自定义的`service`中设置断点进行调试了。
 
+在example中增加了一个简单的`debug`服务，可以用来测试调试功能。
+
+![debug服务示例](img/debug-service.png)
+
+调试功能包括
+- 断点调试, 包括条件断点
+- 单步调试
+- 变量观察
+- 调用栈查看
