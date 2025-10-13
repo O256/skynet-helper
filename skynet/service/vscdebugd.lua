@@ -305,8 +305,9 @@ function request.scopes(req)
 end
 
 function request.variables(req)
+    local varref = req.arguments.variablesReference
     if debug_addr then
-        local ok, vars = skynet.call(debug_addr, "debug", "vsccmd", "variables", req.arguments.variablesReference)
+        local ok, vars = skynet.call(debug_addr, "debug", "vsccmd", "variables", varref)
         if ok then
             send_response(req.command, true, req.seq, {
                 variables = vars
@@ -314,9 +315,8 @@ function request.variables(req)
         else
             send_response(req.command, false, req.seq, vars)
         end
-    else
-        send_response(req.command, false, req.seq, "variables error")
     end
+    skynet.send(".logger", "lua", "variables", req)
 end
 
 local exit_code = 0

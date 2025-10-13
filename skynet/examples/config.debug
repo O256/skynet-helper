@@ -8,6 +8,7 @@ harbor = 0
 -- VSCode调试模式
 logger = "vscdebuglog"
 logservice = "snlua"
+logmodel = 1 -- 日志模式, 0: 通用模式, 1: 折叠模式,只打印第一行,需要展开查看详细内容
 
 start = "debug"
 bootstrap = "snlua bootstrap"	-- The service for bootstrap
