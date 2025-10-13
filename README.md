@@ -52,7 +52,7 @@
 ![准备调试环境](img/debug-step1.png)!
 
 - 执行之后需要选择你的skynet所在的路径, 然后确定
-- 
+
 ![选择skynet路径](img/debug-step2.png)
 
 - 可以通过git差异看到修改内容。
