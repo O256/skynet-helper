@@ -5,6 +5,7 @@
 # Sproto 支持
 
 ## Sproto 语法高亮
+
 ![Sproto 语法高亮](./img/sproto-grammars.png)
 
 打开 `.sproto` 文件即可看到语法高亮效果。**需要注意`sproto`文件的扩展名必须是`.sproto`，否则无法识别。**
@@ -51,9 +52,11 @@
 ![准备调试环境](img/debug-step1.png)!
 
 - 执行之后需要选择你的skynet所在的路径, 然后确定
+- 
 ![选择skynet路径](img/debug-step2.png)
 
 - 可以通过git差异看到修改内容。
+
 ![查看修改内容](img/debug-step3.png)
 
 - 通过make linux重新编译skynet
